@@ -1,0 +1,4 @@
+# configure pushover - do NOT put the tokens in git!
+# http://pushover.net
+PUSH_TOKEN = None
+PUSH_USER_TOKEN = None
