@@ -21,9 +21,9 @@ VIB_ANALOG = 0
 
 DEBUG_IO=False # print each event
 
-MILL_STOP_TIME = 10 #30 # alert after this. wait awhile in case its just a temporary pause
-MILL_START_TIME = 3 # must be vibrating this long to count as started
-MILL_START_TIMEOUT = 1 # must get consistent vibration when starting to move
+MILL_STOP_TIME = 20 # alert after this. wait awhile in case its just a temporary pause
+MILL_START_TIME = 7 # must be vibrating this long to count as started
+MILL_START_TIMEOUT = 3 # must get consistent vibration when starting to move
 
 
 def send_push_notification(msg,ok=True ):
@@ -36,7 +36,7 @@ def send_push_notification(msg,ok=True ):
         return 
     try:
         print "PUSH: '%s'"%msg
-        title = "%s %s"%(APP_NAME,"OK" if ok else "!WARN!")
+        title = APP_NAME#"%s %s"%(APP_NAME,"OK" if ok else "!WARN!")
         r=requests.post("https://api.pushover.net/1/messages.json",{
           "token":PUSH_TOKEN,
           "user": PUSH_USER_TOKEN,
@@ -76,8 +76,8 @@ vib={
     "lastDigital":False,
     "lastAnalog":0,
     "updateTime":0, 
-    "stopTime":0,
-    "startTime":0,
+    "stopTime":time.time(),
+    "startTime":time.time(),
        
 }
 
@@ -92,14 +92,18 @@ def isStartingToMove():
     return vib["state"] == S_PRE_MOVE
 
 def setStopped():
+    global vib	
     vib["stopTime"]=time.time()  
-    vib["state"]=S_STOPPED     
+    vib["state"]=S_STOPPED   
+      
 def setStarted():
+    global vib	
     vib["state"] = S_PRE_MOVE         
     vib["startTime"]=time.time() 
 
 def setMoving():
-    s["state"] = S_MOVING       
+    global vib	
+    vib["state"] = S_MOVING       
     
 def vibrationUpdate(digital, analog):
     global vib
@@ -124,7 +128,7 @@ def vibrationUpdate(digital, analog):
         setStarted()
     
             
-    if isStartingToMove() and time.time() - vib["moveStart"] > MILL_START_TIME:
+    if isStartingToMove() and time.time() - vib["startTime"] > MILL_START_TIME:
         print "Moving consistently"
         pausetime = time.time()-vib["stopTime"]
         mstr = ("%2.2f seconds"%pausetime) if pausetime < 60*60 else "awhile"
